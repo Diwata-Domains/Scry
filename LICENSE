@@ -1,0 +1,60 @@
+Business Source License 1.1
+
+-------------------------------------------------------------------------------
+
+NOTE (Diwata LLC): This file is a prepared license scaffold. The Parameters
+block below is final and specific to Scry Core. The canonical, unmodifiable
+"Terms" section of the Business Source License 1.1 must be pasted in verbatim
+from the official source (https://mariadb.com/bsl11/) at the point of
+publishing Scry Core code — the BSL requires the Terms be reproduced exactly
+and unaltered. Do not edit the Terms; only the Parameters below are
+project-specific. Until the Terms are inserted and this file ships alongside
+released Scry Core code, the repository remains governed by NOTICE.md
+(all rights reserved).
+
+-------------------------------------------------------------------------------
+
+Parameters
+
+Licensor:             Diwata LLC
+
+Licensed Work:        Scry Core — the generic data-acquisition engine
+                      (pipeline contract and runner; base fetcher/parser
+                      interfaces and their generic reference implementations;
+                      source-definition schema; job-lifecycle model; provenance
+                      / immutable-artifact model; and accompanying documentation),
+                      as published in this repository.
+                      The Licensed Work is (c) 2026 Diwata LLC.
+
+Additional Use Grant: You may make production use of the Licensed Work, provided
+                      that you may not offer the Licensed Work, or any product or
+                      service whose value derives substantially from the Licensed
+                      Work, to third parties on a hosted, embedded, or managed
+                      basis where that offering competes with any commercial
+                      offering of Diwata LLC.
+
+                      Use of the Licensed Work by Diwata LLC and its products,
+                      services, and engagements — including Diwa Domains, internal
+                      Diwata operations, and Diwata's client work — is unrestricted
+                      and not subject to the limitation above.
+
+Change Date:          Three (3) years from the date the applicable version of the
+                      Licensed Work is first published. For the initial published
+                      release, set this to that release date + 3 years before
+                      shipping (placeholder: 2029-06-22).
+
+Change License:       Apache License, Version 2.0
+
+-------------------------------------------------------------------------------
+
+For information about alternative licensing arrangements for the Licensed Work,
+please contact Diwata LLC.
+
+-------------------------------------------------------------------------------
+
+Terms
+
+[ Paste the canonical Business Source License 1.1 "Terms" section here, verbatim
+  and unmodified, from https://mariadb.com/bsl11/ before publishing Scry Core
+  code. The Terms begin with "The Business Source License (this document, or the
+  "License") is not an Open Source license." and must not be altered. ]

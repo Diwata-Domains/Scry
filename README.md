@@ -1,57 +1,113 @@
 # Scry
+[![License: BUSL-1.1](https://img.shields.io/badge/license-BUSL--1.1-blue)](LICENSE)
 
-**Self-hosted, provenance-first data acquisition for the Diwata stack.**
+**Self-hosted, provenance-first data acquisition. Every fetch is an immutable, auditable artifact.**
 
-Scry is Diwata's ingestion layer: it acquires raw data from the web, browsers, APIs, and files,
-captures an immutable artifact of exactly what was seen, normalizes it, and delivers structured
-records downstream. It is the **Bronze layer** of a Bronze → Silver → Gold lakehouse — Scry owns
-raw acquisition; Lore owns normalized entities; product surfaces (the Diwa Domains graph) own the
-Gold query layer.
+Most scraping tools throw the raw fetch away — you get data out, but no record of exactly what was seen or when. Scry keeps it: it acquires data from the web, browsers, APIs, and files, captures an immutable, timestamped artifact of every fetch, extracts structured records with deterministic rules, and delivers them downstream. It runs in your own stack and is built to be driven by agents.
 
-> **Status:** v0.1.0 · Phase 1 (fetcher foundation). Canonical design approved 2026-06-02.
-> This repository is the public face of Scry — architecture, design, and provenance model. The
-> production implementation is developed and maintained by Diwata LLC as part of the Diwata stack.
+*Source-available core in preparation. This repository hosts the architecture, provenance model, and license — see [`docs/`](docs/).*
 
----
+## Features
 
-## What it does
+- **Provenance-first.** Every fetch is a new immutable, timestamped, checksummed artifact. Replay any fetch to prove exactly what was seen, and diff it against a prior capture. Scry never overwrites.
+- **Deterministic extraction.** CSS selectors, JSON paths, and field maps — auditable and reproducible. No black-box ML guessing.
+- **Pluggable fetchers.** `web` (httpx), `browser` (Playwright), `api`, and `file`, over a common interface.
+- **Self-hosted.** Runs in your own Docker stack. Your data never leaves it.
+- **Agent-native.** Exposes acquisition as MCP tools, so agents acquire data with full provenance.
+- **Built-in pipeline.** `fetch → parse → normalize → validate → output`, with failed records routed to a dead-letter path instead of vanishing.
+- **Scheduling and queue.** Cron triggers and Redis-backed workers for recurring acquisition.
 
+## Requirements
+
+- Python 3.12+
+- Redis (job queue)
+- Playwright (optional — for the `browser` fetcher)
+- Docker (optional — for the full self-hosted stack)
+
+## Install
+
+```bash
+uv add scry
 ```
-source definition → fetch → parse → normalize → validate → output
-                       │                                       │
-                       ▼                                       ▼
-                immutable artifact (Vault)            normalized record (Lore)
+
+```bash
+pip install scry
 ```
 
-- **Fetch** — pluggable fetchers per acquisition mode: `web` (httpx), `browser` (Playwright for
-  rendered content), `api` (REST), `file`.
-- **Parse** — rule-based, deterministic extraction: `html` (CSS selectors), `json_path`, `file`.
-- **Normalize / validate** — map extracted fields to a typed canonical shape; failed records go to
-  a dead-letter path with error metadata rather than vanishing.
-- **Output** — write the raw artifact to Vault (append-only, deduplicated by checksum) and the
-  normalized record to Lore.
-- **Schedule / queue / worker** — Redis/RQ job queue, APScheduler cron triggers, configurable
-  worker processes. Job lifecycle: `QUEUED → RUNNING → COMPLETE → FAILED → RETRYING → DEAD`.
-- **MCP** — exposes acquisition as MCP tools so agents can invoke it.
+From source:
 
-## Design principles
+```bash
+git clone https://github.com/Diwata-Domains/Scry
+cd Scry
+uv sync
+```
 
-- **Provenance first.** Every fetch is a new, timestamped, immutable artifact. Scry never
-  overwrites — the artifact history for a source is always complete and append-only (modeled on the
-  Wayback Machine / Common Crawl approach).
-- **Self-hosted.** Runs in your own Docker stack. No third-party cloud holds the data.
-- **Deterministic extraction.** V1 extraction is explicit rules (selectors, JSON paths, field
-  maps) — auditable and reproducible. ML-assisted extraction is a possible optional V2 layer.
+## Quick start
+
+1. Define a source — what to acquire, how, and how to extract it:
+
+   ```yaml
+   # sources/example.yaml
+   name: example-articles
+   fetch:
+     mode: web
+     url: https://example.com/articles
+   parse:
+     mode: html
+     records: "article.post"
+     fields:
+       title: "h2::text"
+       url: "a::attr(href)"
+   ```
+
+2. Run it:
+
+   ```bash
+   scry run sources/example.yaml
+   ```
+
+3. List the immutable artifact and the normalized records it produced:
+
+   ```bash
+   scry artifacts list
+   ```
+
+4. Replay the exact fetch to prove what was seen — and diff two captures:
+
+   ```bash
+   scry replay <artifact-id>
+   scry replay --diff <artifact-id-a> <artifact-id-b>
+   ```
+
+## MCP
+
+Scry exposes acquisition as MCP tools — submit a job, fetch a source, list artifacts — so an agent can acquire data with full provenance. Start the MCP server:
+
+```bash
+scry mcp
+```
+
+## Self-hosted stack
+
+Run the full stack — API, workers, scheduler, and Redis — with Docker:
+
+```bash
+docker compose up
+```
 
 ## Architecture
 
-See [`docs/landscape.md`](docs/landscape.md) for the full competitive and inspirational landscape —
-how Scry relates to Scrapy, Playwright, Apify, Airbyte/Fivetran, and the Bronze/Silver/Gold
-lakehouse model.
+Scry is the Bronze layer of a Bronze → Silver → Gold lakehouse: it owns raw acquisition; normalized entities and product query surfaces live downstream. Extraction is deterministic and rule-based; ML-assisted extraction is an optional future layer. See [`docs/landscape.md`](docs/landscape.md) for the full competitive and inspirational landscape.
 
-## Ownership & license
+## Development
 
-Scry is a product of **Diwata LLC**. This repository is published for transparency and reference.
-It is **source-visible, all rights reserved** — see [`NOTICE.md`](NOTICE.md). A formal open-source
-or source-available license may be applied to a designated core in the future. For commercial use
-or licensing, contact Diwata LLC.
+```bash
+uv sync
+uv run pytest
+uv run ruff check .
+uv run mypy scry
+```
+
+## License
+
+[BUSL-1.1](LICENSE) (Business Source License 1.1) — source-available, converting to Apache-2.0 after the Change Date. The Additional Use Grant permits broad use but does not permit offering Scry as a competing hosted service. Commercial or hosted-use licensing: ss@diwata.domains

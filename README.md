@@ -110,4 +110,4 @@ uv run mypy scry
 
 ## License
 
-[BUSL-1.1](LICENSE) (Business Source License 1.1) — source-available, converting to Apache-2.0 after the Change Date. The Additional Use Grant permits broad use but does not permit offering Scry as a competing hosted service. Commercial or hosted-use licensing: ss@diwata.domains
+[BUSL-1.1](LICENSE) (Business Source License 1.1) — source-available, converting to Apache-2.0 after the Change Date. The Additional Use Grant permits broad use but does not permit offering Scry as a competing hosted service. Commercial or hosted-use licensing: licensing@diwata.domains · Security: security@diwata.domains ([`SECURITY.md`](SECURITY.md))

@@ -8,6 +8,7 @@ anti-bot logic, and product-specific wiring are not part of it.
 """
 
 from scry.auth import AuthenticatedFetcher
+from scry.health import HealthReport, RunLog, evaluate
 from scry.models import (
     FetchResult,
     JobStatus,
@@ -34,6 +35,9 @@ __all__ = [
     "ToSClass",
     "RunResult",
     "run_source",
+    "evaluate",
+    "HealthReport",
+    "RunLog",
     "load_source",
     "load_sources",
     "__version__",

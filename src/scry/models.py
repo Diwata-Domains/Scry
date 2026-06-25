@@ -16,6 +16,24 @@ class JobStatus(str, Enum):
     DEAD = "dead"
 
 
+class ToSClass(str, Enum):
+    """How a capture may be used downstream — recorded on the source, the artifact,
+    and every normalized record, so a consumer can gate mechanically rather than by
+    memory. (A hosted/SaaS surface should refuse anything not clearly clean.)
+    """
+
+    CLEAN_PUBLIC = "clean_public"
+    """Unauthenticated, public data (open API, RSS, a public web page)."""
+
+    CLEAN_USER_SESSION = "clean_user_session"
+    """The end user's OWN authenticated session, user-triggered (e.g. a browser
+    extension capturing a page the user is already viewing). Defensible to surface."""
+
+    RESTRICTED_INTERNAL = "restricted_internal"
+    """Anything relying on operator-side login, scale, or evasion. Internal / private
+    use only — never surface in a product offered to third parties."""
+
+
 @dataclass
 class SourceDefinition:
     """Declarative description of what to acquire, how, and how often.
@@ -41,6 +59,7 @@ class SourceDefinition:
     schedule: Optional[str] = None   # cron expression or None / "on_demand"
     critical: bool = False
     enabled: bool = True
+    tos_class: ToSClass = ToSClass.CLEAN_PUBLIC  # how captures may be used downstream
 
 
 @dataclass
@@ -60,3 +79,4 @@ class NormalizedRecord:
     entity_type: str
     data: dict[str, Any]
     artifact_id: Optional[str] = None
+    tos_class: str = ToSClass.CLEAN_PUBLIC.value  # inherited from the source; gate on this

@@ -16,29 +16,10 @@ evasion logic, no platform names.
 from __future__ import annotations
 
 from abc import abstractmethod
-from enum import Enum
 from pathlib import Path
 
 from scry.fetchers import Fetcher
-
-
-class ToSClass(str, Enum):
-    """How a capture may be used downstream.
-
-    Adapters MUST declare one. Consumers gate on it: a hosted/SaaS surface should
-    refuse to display anything that is not clearly clean.
-    """
-
-    CLEAN_PUBLIC = "clean_public"
-    """Unauthenticated, public data (e.g. an open API, RSS, a public web page)."""
-
-    CLEAN_USER_SESSION = "clean_user_session"
-    """The end user's OWN authenticated session, user-triggered (e.g. a browser
-    extension capturing a page the user is already viewing). Defensible to surface."""
-
-    RESTRICTED_INTERNAL = "restricted_internal"
-    """Anything that relies on operator-side login, scale, or evasion. Internal /
-    private use only — never surface in a product offered to third parties."""
+from scry.models import ToSClass
 
 
 class AuthenticatedFetcher(Fetcher):

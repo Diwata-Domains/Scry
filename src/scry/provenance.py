@@ -37,6 +37,7 @@ class Artifact:
     content_sha256: str
     size: int
     metadata: dict[str, Any] = field(default_factory=dict)
+    tos_class: str = "clean_public"  # how this capture may be used downstream
 
 
 def _utcnow_iso() -> str:
@@ -53,7 +54,8 @@ class ArtifactStore:
         self.artifacts_dir.mkdir(parents=True, exist_ok=True)
         self.blobs_dir.mkdir(parents=True, exist_ok=True)
 
-    def write(self, source_id: str, result: FetchResult, captured_at: Optional[str] = None) -> Artifact:
+    def write(self, source_id: str, result: FetchResult, captured_at: Optional[str] = None,
+              tos_class: str = "clean_public") -> Artifact:
         """Record a fetch as an immutable artifact. Blob is deduplicated by checksum."""
         sha = hashlib.sha256(result.content).hexdigest()
         blob = self.blobs_dir / f"{sha}.bin"
@@ -67,6 +69,7 @@ class ArtifactStore:
             content_sha256=sha,
             size=len(result.content),
             metadata=result.metadata,
+            tos_class=tos_class,
         )
         (self.artifacts_dir / f"{art.artifact_id}.json").write_text(
             json.dumps(asdict(art), indent=2, sort_keys=True)

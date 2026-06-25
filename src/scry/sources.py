@@ -12,6 +12,7 @@
         url: "a::attr(href)"
     output_schema: { entity_type: article, required: [title] }
     schedule: "0 * * * *"    # optional cron
+    tos_class: clean_public  # clean_public | clean_user_session | restricted_internal
 """
 
 from __future__ import annotations
@@ -19,10 +20,20 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from scry.models import SourceDefinition
+from scry.models import SourceDefinition, ToSClass
 
 _VALID_TYPES = {"web", "api", "file", "browser"}
 _DEFAULT_PARSER = {"web": "html", "browser": "html", "api": "json_path", "file": "file"}
+
+
+def _parse_tos_class(value: Any) -> ToSClass:
+    if value is None:
+        return ToSClass.CLEAN_PUBLIC
+    try:
+        return ToSClass(str(value))
+    except ValueError:
+        valid = [c.value for c in ToSClass]
+        raise ValueError(f"tos_class must be one of {valid}, got {value!r}") from None
 
 
 def source_from_dict(data: dict[str, Any], *, source_id: str | None = None) -> SourceDefinition:
@@ -56,6 +67,7 @@ def source_from_dict(data: dict[str, Any], *, source_id: str | None = None) -> S
         schedule=data.get("schedule"),
         critical=data.get("critical", False),
         enabled=data.get("enabled", True),
+        tos_class=_parse_tos_class(data.get("tos_class")),
     )
 
 

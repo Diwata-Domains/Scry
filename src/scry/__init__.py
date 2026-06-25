@@ -7,13 +7,14 @@ This package is the generic engine only. Tuned source adapters, enrichment/fusio
 anti-bot logic, and product-specific wiring are not part of it.
 """
 
-from scry.auth import AuthenticatedFetcher, ToSClass
+from scry.auth import AuthenticatedFetcher
 from scry.models import (
     FetchResult,
     JobStatus,
     NormalizedRecord,
     ParsedRecord,
     SourceDefinition,
+    ToSClass,
 )
 from scry.provenance import Artifact, ArtifactStore
 from scry.runner import RunResult, run_source

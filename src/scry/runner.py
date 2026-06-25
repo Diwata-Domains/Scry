@@ -46,9 +46,11 @@ def run_source(source: SourceDefinition, store: ArtifactStore) -> RunResult:
     parser = PARSERS.get(source.parser, HTMLParser)()
     entity_type = (source.output_schema or {}).get("entity_type", "document")
     try:
+        tos_class = source.tos_class.value
         fetch_result = fetcher.fetch(source)
-        artifact = store.write(source.id, fetch_result)  # provenance before parsing
-        logger.info("captured source=%s artifact=%s bytes=%d", source.id, artifact.artifact_id, artifact.size)
+        artifact = store.write(source.id, fetch_result, tos_class=tos_class)  # provenance before parsing
+        logger.info("captured source=%s artifact=%s bytes=%d tos=%s",
+                    source.id, artifact.artifact_id, artifact.size, tos_class)
 
         records: list[NormalizedRecord] = []
         results: list[ValidationResult] = []
@@ -57,6 +59,7 @@ def run_source(source: SourceDefinition, store: ArtifactStore) -> RunResult:
             if not nr.data:
                 continue
             nr.artifact_id = artifact.artifact_id
+            nr.tos_class = tos_class  # travels with every record for downstream gating
             results.append(validate(nr, source.output_schema))
             records.append(nr)
 

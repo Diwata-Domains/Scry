@@ -16,3 +16,5 @@ output_schema:
   entity_type: article
   required: [title]
 schedule: "0 * * * *"   # hourly (used by `scry scheduler`)
+tos_class: clean_public   # clean_public | clean_user_session | restricted_internal
+                          # recorded on the artifact + every record so consumers can gate captures

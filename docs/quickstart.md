@@ -6,7 +6,7 @@ exactly what was fetched.
 ## 1. Install
 
 ```bash
-uv add scry      # or: pip install scry
+uv add scry-kit      # or: pip install scry-kit
 ```
 
 No external services required — the provenance store and the work queue are local and file-backed.

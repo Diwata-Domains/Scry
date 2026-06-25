@@ -109,7 +109,7 @@ class FileParser(Parser):
         try:
             import openpyxl
         except ImportError as e:  # pragma: no cover
-            raise RuntimeError("XLSX needs the extra: pip install 'scry[files]'") from e
+            raise RuntimeError("XLSX needs the extra: pip install 'scry-kit[files]'") from e
         wb = openpyxl.load_workbook(io.BytesIO(content), read_only=True, data_only=True)
         rows = list(wb.active.iter_rows(values_only=True))
         if not rows:
@@ -122,7 +122,7 @@ class FileParser(Parser):
         try:
             import pdfplumber
         except ImportError as e:  # pragma: no cover
-            raise RuntimeError("PDF needs the extra: pip install 'scry[files]'") from e
+            raise RuntimeError("PDF needs the extra: pip install 'scry-kit[files]'") from e
         parts = []
         with pdfplumber.open(io.BytesIO(content)) as pdf:
             for page in pdf.pages:

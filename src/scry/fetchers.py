@@ -108,7 +108,7 @@ class BrowserFetcher(Fetcher):
         try:
             from playwright.sync_api import sync_playwright
         except ImportError as e:  # pragma: no cover
-            raise RuntimeError("BrowserFetcher needs: pip install 'scry[browser]' && playwright install chromium") from e
+            raise RuntimeError("BrowserFetcher needs: pip install 'scry-kit[browser]' && playwright install chromium") from e
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
             page = browser.new_page()

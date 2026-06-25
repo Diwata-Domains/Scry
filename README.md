@@ -20,18 +20,20 @@ The source-available core is here: the generic engine (`fetch → parse → norm
 ## Requirements
 
 - Python 3.11+
-- Playwright (optional — for the `browser` fetcher: `pip install 'scry[browser]'`)
-- openpyxl / pdfplumber (optional — for XLSX/PDF parsing: `pip install 'scry[files]'`)
+- Playwright (optional — for the `browser` fetcher: `pip install 'scry-kit[browser]'`)
+- openpyxl / pdfplumber (optional — for XLSX/PDF parsing: `pip install 'scry-kit[files]'`)
 
 ## Install
 
 ```bash
-uv add scry
+uv add scry-kit
 ```
 
 ```bash
-pip install scry
+pip install scry-kit
 ```
+
+(PyPI package is `scry-kit`; it installs the `scry` import package and the `scry` CLI.)
 
 From source:
 

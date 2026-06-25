@@ -7,6 +7,7 @@ This package is the generic engine only. Tuned source adapters, enrichment/fusio
 anti-bot logic, and product-specific wiring are not part of it.
 """
 
+from scry.auth import AuthenticatedFetcher, ToSClass
 from scry.models import (
     FetchResult,
     JobStatus,
@@ -28,6 +29,8 @@ __all__ = [
     "SourceDefinition",
     "Artifact",
     "ArtifactStore",
+    "AuthenticatedFetcher",
+    "ToSClass",
     "RunResult",
     "run_source",
     "load_source",

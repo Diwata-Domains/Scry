@@ -5,7 +5,7 @@
 
 Most scraping tools throw the raw fetch away — you get data out, but no record of exactly what was seen or when. Scry keeps it: it acquires data from the web, browsers, APIs, and files, captures an immutable, timestamped artifact of every fetch, extracts structured records with deterministic rules, and delivers them downstream. It runs in your own stack and is built to be driven by agents.
 
-*Source-available core in preparation. This repository hosts the architecture, provenance model, and license — see [`docs/`](docs/).*
+The source-available core is here: the generic engine (`fetch → parse → normalize → validate → output`), the immutable provenance store, and the CLI. Tuned source adapters, enrichment/fusion, and anti-bot logic are intentionally not part of this core. See [`docs/`](docs/).
 
 ## Features
 
@@ -15,14 +15,13 @@ Most scraping tools throw the raw fetch away — you get data out, but no record
 - **Self-hosted.** Runs in your own Docker stack. Your data never leaves it.
 - **Agent-native.** Exposes acquisition as MCP tools, so agents acquire data with full provenance.
 - **Built-in pipeline.** `fetch → parse → normalize → validate → output`, with failed records routed to a dead-letter path instead of vanishing.
-- **Scheduling and queue.** Cron triggers and Redis-backed workers for recurring acquisition.
+- **Scheduling and queue.** Cron triggers and a dependency-free, file-backed work queue for recurring acquisition (no external broker required).
 
 ## Requirements
 
-- Python 3.12+
-- Redis (job queue)
-- Playwright (optional — for the `browser` fetcher)
-- Docker (optional — for the full self-hosted stack)
+- Python 3.11+
+- Playwright (optional — for the `browser` fetcher: `pip install 'scry[browser]'`)
+- openpyxl / pdfplumber (optional — for XLSX/PDF parsing: `pip install 'scry[files]'`)
 
 ## Install
 
@@ -87,12 +86,13 @@ Scry exposes acquisition as MCP tools — submit a job, fetch a source, list art
 scry mcp
 ```
 
-## Self-hosted stack
+## Scheduling & workers
 
-Run the full stack — API, workers, scheduler, and Redis — with Docker:
+Add a `schedule:` (cron) to a source, then run the scheduler and a worker — no external broker needed (a local, file-backed queue):
 
 ```bash
-docker compose up
+scry scheduler --sources sources/   # enqueue sources whose cron is due
+scry worker --sources sources/      # claim and run queued jobs
 ```
 
 ## Architecture

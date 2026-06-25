@@ -6,14 +6,10 @@ exactly what was fetched.
 ## 1. Install
 
 ```bash
-uv add scry
+uv add scry      # or: pip install scry
 ```
 
-Start Redis (the job queue) if it is not already running:
-
-```bash
-docker run -p 6379:6379 redis
-```
+No external services required — the provenance store and the work queue are local and file-backed.
 
 ## 2. Define a source
 
@@ -65,7 +61,7 @@ scry replay --diff <artifact-id-a> <artifact-id-b>
 
 ## 6. Schedule it
 
-Add a schedule to acquire on a cron cadence; Redis-backed workers run the jobs.
+Add a schedule to acquire on a cron cadence; a local file-backed queue holds the jobs and workers run them.
 
 ```yaml
 schedule: "0 * * * *"    # hourly

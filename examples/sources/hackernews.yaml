@@ -1,0 +1,21 @@
+# Runnable example — a single Hacker News story via the public API (no auth).
+#   scry run examples/sources/hackernews.yaml
+#   scry replay <artifact-id>
+
+name: hn-story-8863
+fetch:
+  mode: api
+  url: https://hacker-news.firebaseio.com/v0/item/8863.json
+parse:
+  mode: json_path
+  fields:
+    title: title
+    author: by
+    url: url
+    score: score
+output_schema:
+  entity_type: story
+  required: [title]
+  types:
+    title: string
+    score: number

@@ -1,0 +1,18 @@
+# HTML example matching the quickstart (illustrative — point `url` at a real page).
+#   scry run examples/sources/articles.yaml
+
+name: example-articles
+fetch:
+  mode: web
+  url: https://example.com/articles
+parse:
+  mode: html
+  records: "article.post"
+  fields:
+    title: "h2::text"
+    url: "a::attr(href)"
+    published: "time::attr(datetime)"
+output_schema:
+  entity_type: article
+  required: [title]
+schedule: "0 * * * *"   # hourly (used by `scry scheduler`)

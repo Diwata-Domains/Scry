@@ -22,7 +22,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable, Optional
 
-from scry.runner import RunResult
+from scry.models import SourceDefinition
+from scry.provenance import ArtifactStore
+from scry.runner import RunResult, run_source
 
 
 @dataclass
@@ -79,3 +81,37 @@ class RunLog:
             return []
         rows = [json.loads(line) for line in self.path.read_text().splitlines() if line.strip()]
         return [r for r in rows if source_id is None or r.get("source_id") == source_id]
+
+
+def _health_config(source: SourceDefinition) -> dict:
+    """Read a source's drift thresholds from its `health` block (with defaults)."""
+    cfg = source.health or {}
+    return {
+        "min_records": int(cfg.get("min_records", 1)),
+        "required_nonempty": tuple(cfg.get("required_nonempty") or ()),
+    }
+
+
+def check_source(
+    source: SourceDefinition, store: ArtifactStore, *, run_log: Optional[RunLog] = None
+) -> tuple[RunResult, HealthReport]:
+    """Run one source, evaluate its health (using its `health` config), optionally log it."""
+    result = run_source(source, store)
+    report = evaluate(result, **_health_config(source))
+    if run_log is not None:
+        extra = {"artifact_id": result.artifact_id}
+        if result.records:
+            extra["tos_class"] = result.records[0].tos_class
+        run_log.record(report, **extra)
+    return result, report
+
+
+def check_sources(
+    sources: Iterable[SourceDefinition], store: ArtifactStore, *, run_log: Optional[RunLog] = None
+) -> list[HealthReport]:
+    """Canary sweep: run + health-check each source. Returns the reports (suspect ones have ok=False)."""
+    reports: list[HealthReport] = []
+    for source in sources:
+        _, report = check_source(source, store, run_log=run_log)
+        reports.append(report)
+    return reports

@@ -18,3 +18,6 @@ output_schema:
 schedule: "0 * * * *"   # hourly (used by `scry scheduler`)
 tos_class: clean_public   # clean_public | clean_user_session | restricted_internal
                           # recorded on the artifact + every record so consumers can gate captures
+health:                   # drift checks (used by `scry health-check` + the worker)
+  min_records: 1          # fewer than this => suspect (selector drift / login wall)
+  required_nonempty: [title]   # if 'title' is empty in every record => selector likely broke

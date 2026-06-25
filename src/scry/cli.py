@@ -4,8 +4,9 @@
     scry artifacts list             list captures
     scry replay <artifact-id>       print the exact bytes that were fetched
     scry replay --diff <a> <b>      unified diff between two captures
-    scry worker                     process queued jobs
+    scry worker                     process queued jobs (with health checks + run log)
     scry scheduler                  enqueue sources whose cron is due
+    scry health-check               run all sources, flag drift/breakage (exit 1 if any suspect)
     scry mcp                        run the MCP stdio server
 """
 
@@ -14,13 +15,15 @@ from __future__ import annotations
 import json
 import sys
 import time
+from pathlib import Path
 
 import click
 
+from scry.health import RunLog, check_source, check_sources
 from scry.provenance import ArtifactStore
 from scry.queue import JobQueue
 from scry.runner import run_source as _run_source
-from scry.sources import load_source
+from scry.sources import load_source, load_sources
 
 _store_opt = click.option("--store", "store_dir", default="./scry-data", show_default=True, help="Provenance store directory.")
 _sources_opt = click.option("--sources", "sources_dir", default="./sources", show_default=True, help="Directory of source-definition YAML files.")
@@ -87,8 +90,9 @@ def replay(artifact_ids: tuple[str, ...], store_dir: str, do_diff: bool, out: st
 @_sources_opt
 @click.option("--once", is_flag=True, help="Drain the queue once and exit (otherwise loop).")
 def worker(store_dir: str, sources_dir: str, once: bool) -> None:
-    """Process queued jobs: claim -> run -> mark done/dead."""
+    """Process queued jobs: claim -> run -> health-check -> log -> mark done/dead."""
     store, q = ArtifactStore(store_dir), JobQueue(store_dir)
+    log = RunLog(str(Path(store_dir) / "runs.jsonl"))
     while True:
         job = q.claim()
         if job is None:
@@ -97,12 +101,41 @@ def worker(store_dir: str, sources_dir: str, once: bool) -> None:
             time.sleep(2)
             continue
         try:
-            result = _run_source(load_source(job["source_path"]), store)
+            result, report = check_source(load_source(job["source_path"]), store, run_log=log)
             (q.complete if result.status.value != "failed" else q.fail)(job["job_id"])
-            click.echo(f"{job['job_id']}  {job['source_path']}  -> {result.status.value} ({len(result.records)} records)")
+            msg = f"{job['job_id']}  {job['source_path']}  -> {result.status.value} ({len(result.records)} records)"
+            if not report.ok:
+                msg += f"  ⚠ SUSPECT: {'; '.join(report.reasons)}"
+            click.echo(msg, err=not report.ok)
         except Exception as e:  # noqa: BLE001
             q.fail(job["job_id"])
             click.echo(f"{job['job_id']}  {job['source_path']}  -> error: {e}", err=True)
+
+
+@main.command(name="health-check")
+@_store_opt
+@_sources_opt
+@click.option("--log/--no-log", "do_log", default=True, show_default=True, help="Append results to the run log.")
+def health_check(store_dir: str, sources_dir: str, do_log: bool) -> None:
+    """Canary: run every enabled source, health-check it, log results; exit non-zero if any suspect.
+
+    Put this on a cron (or `scry scheduler` for queued runs) to get automatic drift alerts.
+    """
+    store = ArtifactStore(store_dir)
+    log = RunLog(str(Path(store_dir) / "runs.jsonl")) if do_log else None
+    sources = [s for s in load_sources(sources_dir) if s.enabled]
+    if not sources:
+        click.echo(f"no enabled sources in {sources_dir}", err=True)
+        sys.exit(2)
+    reports = check_sources(sources, store, run_log=log)
+    for r in reports:
+        mark = "ok     " if r.ok else "SUSPECT"
+        detail = f"  :: {'; '.join(r.reasons)}" if r.reasons else ""
+        click.echo(f"[{mark}] {r.source_id}  records={r.records} invalid={r.invalid}{detail}")
+    suspect = [r for r in reports if not r.ok]
+    click.echo(f"\n{len(reports) - len(suspect)}/{len(reports)} healthy; {len(suspect)} suspect")
+    if suspect:
+        sys.exit(1)
 
 
 @main.command()

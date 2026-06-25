@@ -68,6 +68,7 @@ def source_from_dict(data: dict[str, Any], *, source_id: str | None = None) -> S
         critical=data.get("critical", False),
         enabled=data.get("enabled", True),
         tos_class=_parse_tos_class(data.get("tos_class")),
+        health=data.get("health"),
     )
 
 

@@ -60,6 +60,7 @@ class SourceDefinition:
     critical: bool = False
     enabled: bool = True
     tos_class: ToSClass = ToSClass.CLEAN_PUBLIC  # how captures may be used downstream
+    health: Optional[dict[str, Any]] = None  # drift checks: {min_records, required_nonempty}
 
 
 @dataclass

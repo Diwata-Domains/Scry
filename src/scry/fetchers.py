@@ -14,7 +14,7 @@ from typing import Optional
 
 from scry.models import FetchResult, SourceDefinition
 
-_UA = "scry/0.2.0 (+https://github.com/Diwata-Domains/Scry)"
+_UA = "scry/0.2.1 (+https://github.com/Diwata-Domains/Scry)"
 
 
 class Fetcher(ABC):
@@ -102,7 +102,7 @@ class FileFetcher(Fetcher):
 
 
 class BrowserFetcher(Fetcher):
-    """Reference browser fetcher (requires `pip install 'scry[browser]'`)."""
+    """Reference browser fetcher (requires `pip install 'scry-kit[browser]'`)."""
 
     def fetch(self, source: SourceDefinition) -> FetchResult:
         try:

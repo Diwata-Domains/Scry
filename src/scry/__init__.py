@@ -18,7 +18,7 @@ from scry.provenance import Artifact, ArtifactStore
 from scry.runner import RunResult, run_source
 from scry.sources import load_source, load_sources
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 __all__ = [
     "FetchResult",

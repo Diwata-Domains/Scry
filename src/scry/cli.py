@@ -27,7 +27,7 @@ _sources_opt = click.option("--sources", "sources_dir", default="./sources", sho
 
 
 @click.group()
-@click.version_option(package_name="scry")
+@click.version_option(package_name="scry-kit")
 def main() -> None:
     """Scry — provenance-first acquisition."""
 

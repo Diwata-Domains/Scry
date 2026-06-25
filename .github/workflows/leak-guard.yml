@@ -1,0 +1,22 @@
+name: leak-guard
+
+# Fails if any private/internal Diwata component or product name leaks into this
+# public mirror. Runs on every push and PR.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  leak-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Scan for private/internal names
+        run: python scripts/check_no_private_names.py

@@ -20,7 +20,7 @@ a specific data source or to Diwata's internal systems, it belongs in the privat
 - Tuned per-source adapters or source catalogs (keep these private)
 - Enrichment, verification, entity-fusion, or anything that consumes a specific vendor
 - Anti-bot, proxy-rotation, or rate-limit-evasion logic
-- Anything coupled to Diwata's Vault, Lore, Diwa, or internal infrastructure
+- Anything coupled to the maintainer's private storage, normalization, or internal infrastructure
 
 ## Development
 

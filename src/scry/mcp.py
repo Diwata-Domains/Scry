@@ -56,7 +56,7 @@ def _handle(req: dict, store: ArtifactStore) -> dict | None:
     method, rid = req.get("method"), req.get("id")
     if method == "initialize":
         result: Any = {"protocolVersion": PROTOCOL_VERSION, "capabilities": {"tools": {}},
-                       "serverInfo": {"name": "scry", "version": "0.2.0"}}
+                       "serverInfo": {"name": "scry", "version": "0.2.1"}}
     elif method == "tools/list":
         result = {"tools": TOOLS}
     elif method == "tools/call":

@@ -9,6 +9,7 @@ rename so multiple workers don't double-process. This is the generic queue
 from __future__ import annotations
 
 import json
+import time
 import uuid
 from pathlib import Path
 from typing import Optional
@@ -24,7 +25,9 @@ class JobQueue:
 
     def enqueue(self, source_path: str) -> str:
         job_id = uuid.uuid4().hex
-        (self.q / "pending" / f"{job_id}.json").write_text(
+        # filename = <ns-timestamp>-<job_id> so sorted() in claim() is FIFO by insertion time;
+        # time_ns() is fixed-width (lexicographic == chronological), uuid disambiguates ties.
+        (self.q / "pending" / f"{time.time_ns()}-{job_id}.json").write_text(
             json.dumps({"job_id": job_id, "source_path": str(source_path)})
         )
         return job_id
@@ -50,6 +53,5 @@ class JobQueue:
         return len(list((self.q / "pending").glob("*.json")))
 
     def _move(self, job_id: str, to: str) -> None:
-        src = self.q / "processing" / f"{job_id}.json"
-        if src.exists():
-            src.rename(self.q / to / f"{job_id}.json")
+        for src in (self.q / "processing").glob(f"*{job_id}.json"):  # name carries an ns-prefix
+            src.rename(self.q / to / src.name)

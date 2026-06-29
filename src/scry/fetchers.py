@@ -13,8 +13,16 @@ from pathlib import Path
 from typing import Optional
 
 from scry.models import FetchResult, SourceDefinition
+from scry.net import assert_public_url, safe_get
 
 _UA = "scry/0.2.1 (+https://github.com/Diwata-Domains/Scry)"
+
+# request headers redacted before they are persisted into artifact provenance/metadata
+_REDACT_HEADERS = {"authorization", "cookie", "proxy-authorization"}
+
+
+def _redact(headers: dict) -> dict:
+    return {k: ("***redacted***" if k.lower() in _REDACT_HEADERS else v) for k, v in headers.items()}
 
 
 class Fetcher(ABC):
@@ -46,7 +54,7 @@ def _meta(response, headers: dict, source_type: str) -> dict:
     return {
         "url": str(response.url),
         "status_code": response.status_code,
-        "request_headers": headers,
+        "request_headers": _redact(headers),  # never persist auth headers into provenance
         "response_headers": dict(response.headers),
         "duration_ms": int(response.elapsed.total_seconds() * 1000),
         "extraction_context": {"source_type": source_type},
@@ -63,8 +71,8 @@ class WebFetcher(Fetcher):
         if source.rate_limit and (delay := source.rate_limit.get("delay_ms", 0) / 1000) > 0:
             time.sleep(delay)
         headers = _auth_headers(source.auth_config)
-        with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
-            r = client.get(source.url, headers=headers)
+        with httpx.Client(timeout=self.timeout) as client:
+            r = safe_get(client, source.url, headers=headers)  # SSRF-guarded; validates each redirect
             r.raise_for_status()
         ct = r.headers.get("content-type", "text/html").split(";")[0].strip()
         return FetchResult(content=r.content, content_type=ct, metadata=_meta(r, headers, "web"))
@@ -78,18 +86,28 @@ class APIFetcher(Fetcher):
         import httpx
 
         headers = _auth_headers(source.auth_config, accept="application/json")
-        with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
-            r = client.get(source.url, headers=headers)
+        with httpx.Client(timeout=self.timeout) as client:
+            r = safe_get(client, source.url, headers=headers)  # SSRF-guarded
             if r.status_code == 429:
                 time.sleep(int(r.headers.get("Retry-After", 60)))
-                r = client.get(source.url, headers=headers)
+                r = safe_get(client, source.url, headers=headers)
             r.raise_for_status()
         return FetchResult(content=r.content, content_type="application/json", metadata=_meta(r, headers, "api"))
 
 
 class FileFetcher(Fetcher):
+    """Reads a local file. SECURITY: `source.url` is trusted input — if it can come from an
+    externally-managed source registry, construct with `base_dir` to sandbox reads to that
+    directory and reject path traversal.
+    """
+
+    def __init__(self, base_dir: str | Path | None = None):
+        self.base_dir = Path(base_dir).resolve() if base_dir else None
+
     def fetch(self, source: SourceDefinition) -> FetchResult:
-        path = Path(source.url)
+        path = Path(source.url).resolve()
+        if self.base_dir and self.base_dir not in path.parents and path != self.base_dir:
+            raise ValueError(f"file source escapes base_dir: {path}")
         if not path.exists():
             raise FileNotFoundError(f"file source not found: {path}")
         content = path.read_bytes()
@@ -109,6 +127,7 @@ class BrowserFetcher(Fetcher):
             from playwright.sync_api import sync_playwright
         except ImportError as e:  # pragma: no cover
             raise RuntimeError("BrowserFetcher needs: pip install 'scry-kit[browser]' && playwright install chromium") from e
+        assert_public_url(source.url)  # SSRF guard before navigating
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
             page = browser.new_page()
